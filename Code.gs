@@ -11,15 +11,15 @@
  */
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu('Drive utilities')
-    .addItem('Create named files', 'copyFiles')
-    .addItem('Create named subfolders', 'copyFolders')
+  ui.createMenu('🗂️ Drive utilities 🗂️')
+    .addItem('📑 Create named files', 'copyFiles')
+    .addItem('📂 Create named subfolders', 'copyFolders')
     .addSeparator()
-    .addItem('Retrieve File links', 'retrieveFiles')
-    .addItem('Retrieve Subfolder links', 'retrieveFolders')
+    .addItem('🔗 Retrieve File links', 'retrieveFiles')
+    .addItem('🔗 Retrieve Subfolder links', 'retrieveFolders')
     .addToUi();
-  ui.createMenu('Gmail utilities')
-      .addItem('Send mail merge', 'sendEmails')
+  ui.createMenu('📧 Gmail utilities 📧')
+      .addItem('📧 Send mail merge', 'sendEmails')
       .addToUi();
 }
 
@@ -54,7 +54,7 @@ function copyFiles() {
   var filenamesTabName = getUserInput('Enter the filenames tab name');
   var filenamesRange = getUserInput('Enter filename list range');
   var urlWriteColumn = parseInt(getUserInput('Enter column number to write URLs')); // Column index for writing URLs
-  var emailColumn = parseInt(getUserInput('Enter the column number with email addresses')); // The column with emails
+  var emailColumn = parseInt(getUserInput('Enter the column number with editor email addresses (separated by commas)')); // The column with emails
   var destinationFolderUrl = getUserInput('Enter destination folder URL');
 
   var sheet = SpreadsheetApp.openByUrl(filenamesSheetUrl).getSheetByName(filenamesTabName);
