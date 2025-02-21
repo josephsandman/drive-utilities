@@ -49,17 +49,17 @@ function getIdFromUrl(url) {
  */
 function copyFiles() {
   var templateFileUrl = getUserInput('Enter the template file URL');
-  var templateFile = DriveApp.getFileById(getFolderIdFromLink(templateFileUrl));
+  var templateFile = DriveApp.getFileById(getIdFromUrl(templateFileUrl));
   var filenamesSheetUrl = getUserInput('Enter the filenames sheet URL');
   var filenamesTabName = getUserInput('Enter the filenames tab name');
   var filenamesRange = getUserInput('Enter filename list range');
   var destinationFolderUrl = getUserInput('Enter destination folder URL');
-  var urlWriteColumn = getUserInput('Enter column to write URLs'); // Column index for writing URLs
+  var urlWriteColumn = getUserInput('Enter column number to write URLs'); // Column index for writing URLs
   
   var sheet = SpreadsheetApp.openByUrl(filenamesSheetUrl).getSheetByName(filenamesTabName);
   var range = sheet.getRange(filenamesRange);
-  var filenames = range.getValues();
-  var destinationFolder = DriveApp.getFolderById(getFolderIdFromLink(destinationFolderUrl));
+  var filenames = range.getDisplayValues();
+  var destinationFolder = DriveApp.getFolderById(getIdFromUrl(destinationFolderUrl));
 
   var filteredFilenames = filenames.filter((filename) => filename[0] !== "");
 
@@ -80,12 +80,12 @@ function copyFolders() {
   var foldersTabName = getUserInput('Enter the foldernames sheet tab name');
   var foldernamesRange = getUserInput('Enter filename list range');
   var destinationFolderUrl = getUserInput('Enter destination folder URL');
-  var urlWriteColumn = getUserInput('Enter column to write URLs');
+  var urlWriteColumn = getUserInput('Enter column number to write URLs'); // Column index for writing URLs
   
   var sheet = SpreadsheetApp.openByUrl(foldersSheetUrl).getSheetByName(foldersTabName);
   var range = sheet.getRange(foldernamesRange);
-  var foldernames = range.getValues();
-  var destinationFolder = DriveApp.getFolderById(getFolderIdFromLink(destinationFolderUrl));
+  var foldernames = range.getDisplayValues();
+  var destinationFolder = DriveApp.getFolderById(getIdFromUrl(destinationFolderUrl));
 
   var filteredFoldernames = foldernames.filter((foldername) => foldername[0] !== "");
 
@@ -101,7 +101,7 @@ function copyFolders() {
  */
 function retrieveFiles() {
   var parentFolderUrl = getUserInput('Enter the parent folder link');
-  var folder = DriveApp.getFolderById(getFolderIdFromLink(parentFolderUrl));
+  var folder = DriveApp.getFolderById(getIdFromUrl(parentFolderUrl));
   var files = folder.getFiles();
   var fileData = [];
   
@@ -124,7 +124,7 @@ function retrieveFiles() {
  */
 function retrieveFolders() {
   var parentFolderUrl = getUserInput('Enter the parent folder link');
-  var folder = DriveApp.getFolderById(getFolderIdFromLink(parentFolderUrl));
+  var folder = DriveApp.getFolderById(getIdFromUrl(parentFolderUrl));
   var subfolders = folder.getFolders();
   var folderData = [];
   
