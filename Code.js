@@ -9,7 +9,7 @@
 /**
  * Adds custom menus to the spreadsheet upon opening.
  */
-function onOpen() {
+function onOpen(e) {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🗂️ Drive utilities 🗂️')
     .addItem('📑 Create named files', 'copyFiles')
@@ -22,9 +22,6 @@ function onOpen() {
       .addItem('📧 Send mail merge', 'sendEmails')
       .addToUi();
 }
-
-const RECIPIENT_COL  = "email";
-const EMAIL_SENT_COL = "sent";
 
 /**
  * Prompts the user for input and returns their response as a string.
@@ -53,10 +50,9 @@ function copyFiles() {
   var filenamesSheetUrl = getUserInput('Enter the filenames sheet URL');
   var filenamesTabName = getUserInput('Enter the filenames tab name');
   var filenamesRange = getUserInput('Enter filename list range');
-  var urlWriteColumn = parseInt(getUserInput('Enter column number to write URLs')); // Column index for writing URLs
-  var emailColumn = parseInt(getUserInput('Enter the column number with editor email addresses (separated by commas)')); // The column with emails
   var destinationFolderUrl = getUserInput('Enter destination folder URL');
-
+  var urlWriteColumn = getUserInput('Enter column number to write URLs'); // Column index for writing URLs
+  
   var sheet = SpreadsheetApp.openByUrl(filenamesSheetUrl).getSheetByName(filenamesTabName);
   var range = sheet.getRange(filenamesRange);
   var filenames = range.getDisplayValues();
@@ -65,12 +61,7 @@ function copyFiles() {
   var filteredFilenames = filenames.filter((filename) => filename[0] !== "");
 
   for (let i = 0; i < filteredFilenames.length; i++) {
-    let emailAddress = sheet.getRange(i + 2, emailColumn).getValue(); // Assuming emails start from same row
-    let emailArray = emailAddress.split(",").map(email => email.trim()); // Split if multiple emails are comma-separated
-
     let newFile = templateFile.makeCopy(filteredFilenames[i].toString(), destinationFolder);
-    newFile.addEditors(emailArray); // Add editors
-
     let fileUrl = newFile.getUrl();
     sheet.getRange(2 + i, parseInt(urlWriteColumn)).setValue(fileUrl);
   }
