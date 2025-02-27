@@ -42,6 +42,18 @@ function getIdFromUrl(url) {
 }
 
 /**
+ * Extracts the folder ID from a Google Drive folder URL.
+ * @param {string} url The Google Drive folder URL.
+ * @return {string|null} The folder ID, or null if not found.
+ */
+function removeQueryFromUrl(url) {
+  const myRegex = /\?.*$/; // Edit this to be the regex you want
+  if (myRegex.test(String(url))) {
+    return replacedWithString = String(url).replace(myRegex,'');
+  }
+}
+
+/**
  * Creates copies of a template file with specified names in a destination folder.
  */
 function copyFiles() {
