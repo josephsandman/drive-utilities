@@ -97,10 +97,11 @@ function getIdFromUrl(url) {
  * Logger.log(`Clean URL: ${cleanUrl}`);
  */
 function removeQueryFromUrl(url) {
-  const myRegex = /\?.*$/; // Edit this to be the regex you want
+  const myRegex = /\?.*$/; // Regular expression to match query strings
   if (myRegex.test(String(url))) {
-    return replacedWithString = String(url).replace(myRegex,'');
+    return String(url).replace(myRegex, ''); // Return URL without query parameters
   }
+  return url; // Return original URL if no query string is found
 }
 
 /**
