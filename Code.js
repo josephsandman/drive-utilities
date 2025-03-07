@@ -7,7 +7,22 @@
  */
 
 /**
- * Adds custom menus to the spreadsheet upon opening.
+ * Adds custom menus to the Google Sheets UI upon opening the spreadsheet.
+ *
+ * This function is automatically triggered when the spreadsheet is opened.
+ * It creates a custom menu titled 'Drive utilities' that includes items for 
+ * creating named files and subfolders, as well as retrieving file and 
+ * subfolder links. Additionally, it adds a 'Gmail utilities' menu for sending 
+ * mail merges. 
+ *
+ * @param {Event} e - The event object containing information about the opening
+ * event (optional, for future use if needed).
+ *
+ * @return {void} This function does not return a value.
+ *
+ * @example
+ * // Automatically called when the spreadsheet is opened
+ * onOpen();
  */
 function onOpen(e) {
   var ui = SpreadsheetApp.getUi();
@@ -25,8 +40,18 @@ function onOpen(e) {
 
 /**
  * Prompts the user for input and returns their response as a string.
- * @param {string} promptMessage The message to display in the prompt.
- * @return {string} The user's input.
+ *
+ * This function displays a prompt dialog to the user with a specified 
+ * message. It waits for the user's input and returns the text 
+ * response provided. If the user cancels the prompt, the returned
+ * value will be an empty string.
+ *
+ * @param {string} promptMessage - The message to display in the prompt dialog.
+ * @return {string} The user's input from the prompt; an empty string if the prompt is canceled.
+ *
+ * @example
+ * const userInput = getUserInput("Please enter your name:");
+ * Logger.log(`User input: ${userInput}`);
  */
 function getUserInput(promptMessage) { // Helper function to handle user inputs
   return SpreadsheetApp.getUi().prompt(promptMessage).getResponseText();
@@ -34,17 +59,42 @@ function getUserInput(promptMessage) { // Helper function to handle user inputs
 
 /**
  * Extracts the folder ID from a Google Drive folder URL.
- * @param {string} url The Google Drive folder URL.
- * @return {string|null} The folder ID, or null if not found.
+ *
+ * This function takes a Google Drive folder URL as input and uses a regular 
+ * expression to extract the folder ID portion of the URL. The folder ID is 
+ * a unique identifier used by Google Drive to reference specific folders.
+ *
+ * If the URL is valid and contains a folder ID, the function returns the 
+ * ID as a string. If the URL does not match the expected format or if 
+ * no ID is found, it will return "undefined" instead of null.
+ *
+ * @param {string} url - The Google Drive folder URL from which to extract the ID.
+ * @return {string|undefined} The folder ID, or undefined if not found.
+ *
+ * @throws {Error} Throws an error if the input URL is not a valid string.
+ *
+ * @example
+ * const folderId = getIdFromUrl("https://drive.google.com/drive/folders/1Cf1NbSxGq8po5fMpcwsCOq4Wcj6AwBXt");
+ * Logger.log(`Extracted folder ID: ${folderId}`);
  */
 function getIdFromUrl(url) { 
   return url.match(/[-\w]{25,}(?!.*[-\w]{25,})/).toString();
 }
 
 /**
- * Extracts the folder ID from a Google Drive folder URL.
- * @param {string} url The Google Drive folder URL.
- * @return {string|null} The folder ID, or null if not found.
+ * Removes the query string from a Google Drive URL.
+ *
+ * This function takes a Google Drive URL as input and uses a regular expression 
+ * to remove everything following the '?' character, effectively stripping 
+ * the query parameters from the URL. If the URL does not contain a query string, 
+ * the original URL is returned unchanged.
+ *
+ * @param {string} url - The Google Drive folder URL from which to remove query parameters.
+ * @return {string} The URL without the query string. If no query string is present, the original URL is returned.
+ *
+ * @example
+ * const cleanUrl = removeQueryFromUrl("https://drive.google.com/drive/folders/1Cf1NbSxGq8po5fMpcwsCOq4Wcj6AwBXt?query=someParam");
+ * Logger.log(`Clean URL: ${cleanUrl}`);
  */
 function removeQueryFromUrl(url) {
   const myRegex = /\?.*$/; // Edit this to be the regex you want
@@ -55,6 +105,21 @@ function removeQueryFromUrl(url) {
 
 /**
  * Creates copies of a template file with specified names in a destination folder.
+ *
+ * This function prompts the user for a template file URL, the sheet URL, 
+ * the tab name containing filenames, the range of filenames, and the 
+ * destination folder URL. It then creates copies of the template file 
+ * for each specified filename and saves the URLs of the new files back 
+ * to the specified column in the spreadsheet.
+ *
+ * @return {void} This function does not return a value.
+ *
+ * @throws {Error} Throws an error if any of the inputs are invalid or if 
+ * there is an issue accessing or creating files in Google Drive.
+ *
+ * @example
+ * // This function will be executed when an appropriate trigger is set.
+ * copyFiles();
  */
 function copyFiles() {
   var templateFileUrl = getUserInput('Enter the template file URL');
@@ -81,6 +146,21 @@ function copyFiles() {
 
 /**
  * Creates new folders with specified names in a destination folder.
+ *
+ * This function prompts the user for a Google Sheet URL containing a list of folder names,
+ * the specific tab name within that sheet, the range of folder names, and the destination
+ * folder URL. It then creates new folders in the specified destination folder for each 
+ * valid folder name and saves the URLs of the newly created folders back to the specified 
+ * column in the Google Sheet.
+ *
+ * @return {void} This function does not return a value.
+ *
+ * @throws {Error} Throws an error if any of the inputs are invalid, if it fails to create 
+ * folders in Google Drive, or if there are issues accessing the specified Google Sheet.
+ *
+ * @example
+ * // This function will be executed when invoked by an appropriate trigger.
+ * copyFolders();
  */
 function copyFolders() {
   var foldersSheetUrl = getUserInput('Enter the foldernames list sheet URL');
@@ -104,7 +184,22 @@ function copyFolders() {
 }
 
 /**
- * Retrieves the names and URLs of files within a specified folder and writes them to the active sheet.
+ * Retrieves the names and URLs of all files within a specified Google Drive folder 
+ * and writes them to the active sheet.
+ *
+ * This function prompts the user to enter the public link or ID of a parent folder 
+ * in Google Drive. It retrieves all files within that folder, constructs their 
+ * URLs, and populates the active Google Sheet with the file names and their corresponding 
+ * URLs, starting from the second row.
+ *
+ * @return {void} This function does not return a value.
+ *
+ * @throws {Error} Throws an error if the specified folder cannot be accessed, 
+ * if there are issues retrieving files, or if the input for the folder link is invalid.
+ *
+ * @example
+ * // This function will be executed when invoked by a user action (button click or menu item).
+ * retrieveFiles();
  */
 function retrieveFiles() {
   var parentFolderUrl = getUserInput('Enter the parent folder link');
@@ -127,7 +222,22 @@ function retrieveFiles() {
 }
 
 /**
- * Retrieves the names and URLs of subfolders within a specified folder and writes them to the active sheet.
+ * Retrieves the names and URLs of all subfolders within a specified Google Drive folder 
+ * and writes them to the active sheet.
+ *
+ * This function prompts the user to enter the public link or ID of a parent folder in 
+ * Google Drive. It retrieves all subfolders within that folder, constructs their 
+ * URLs, and populates the active Google Sheet with the subfolder names and their 
+ * corresponding URLs, starting from the second row.
+ *
+ * @return {void} This function does not return a value.
+ *
+ * @throws {Error} Throws an error if the specified folder cannot be accessed, 
+ * if there are issues retrieving subfolders, or if the input for the folder link is invalid.
+ *
+ * @example
+ * // This function will be executed when invoked by a user action (button click or menu item).
+ * retrieveFolders();
  */
 function retrieveFolders() {
   var parentFolderUrl = getUserInput('Enter the parent folder link');
@@ -150,9 +260,28 @@ function retrieveFolders() {
 }
 
 /**
- * Sends emails based on data from a sheet and a Gmail draft template.
- * @param {string} [subjectLine] The subject line of the Gmail draft template.
- * @param {Sheet} [sheet=SpreadsheetApp.getActiveSheet()] The sheet containing the data.
+ * Sends emails to recipients based on data from a specified Google Sheet.
+ *
+ * This function retrieves recipient email addresses and the associated email sent status
+ * from the provided sheet. It utilizes a Gmail draft message as a template and logs
+ * the status of sent emails directly into the specified column.
+ *
+ * If a subject line is not provided, the function will prompt the user to enter one.
+ * If the template or necessary sheet cannot be found, the function will log an error
+ * and terminate execution gracefully.
+ *
+ * @param {string} subjectLine - The subject line for the email draft message. Optional; if not provided, will prompt the user.
+ * @param {string} thisSheet - The Google Sheet file URL or ID containing the mail merge data.
+ * @param {string} thisTab - The name of the tab within the Google Sheet that has the mail merge data.
+ * @param {string} emailRecipients - The header of the column containing recipient email addresses.
+ * @param {string} emailSent - The header of the column where the date the email was sent will be logged.
+ *
+ * @return {void} This function does not return a value.
+ *
+ * @throws {Error} Throws an error if the specified sheet, tab, or required headers do not exist in the provided data.
+ *
+ * @example
+ * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge", "Recipient email", "Email sent");
  */
 function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent) {
   
