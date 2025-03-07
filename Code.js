@@ -491,33 +491,6 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   };
 }
 
-/**
- * Retrieves and logs the types of items in a Google Form specified by its URL.
- *
- * @param {string} formUrl - The URL of the Google Form to open.
- * @return {void} This function does not return a value.
- */
-function verboseForm(formUrl) {
-  try {
-    // Opens the Forms file by its URL.
-    const form = FormApp.openByUrl(formUrl);
-
-    // Gets the list of items in the form.
-    const items = form.getItems();
-
-    // Gets the type for each item and logs them.
-    const types = items.map(item => item.getType().name());
-    
-    console.log(`DEBUG: Form item types: "${types.join(', ')}"`);
-
-  } catch (e) {
-    console.error(`ERROR: Unable to open the form at URL "${formUrl}". ${e.message}`);
-  }
-}
-
-// Example usage
-verboseForm('https://docs.google.com/forms/d/1MNyN0zGLbeZmljms04VApCxZ7ZOMT8Yomp6g5c_c3Fk/edit');
-
 // console.time(`START: `); // start a process timer
 // console.timeEnd(`END: `); // end a proceess timer
 // console.log(`DEBUG: Constant message strong here, followed by variable: '${JSON.stringify(variable)}'`); // debug
