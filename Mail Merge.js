@@ -1,16 +1,21 @@
-// Copyright Martin Hawksey 2020
-//
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not
-// use this file except in compliance with the License.  You may obtain a copy
-// of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
-// License for the specific language governing permissions and limitations under
-// the License.
+// To learn how to use this script, refer to the documentation:
+// https://developers.google.com/apps-script/samples/automations/mail-merge
+
+/*
+Copyright 2022 Martin Hawksey
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
  
 /**
  * @OnlyCurrentDoc
@@ -20,11 +25,11 @@
  * Change these to match the column names you are using for email 
  * recipient addresses and email sent column.
 */
-const RECIPIENT_COL  = "Recipient email";
-const EMAIL_SENT_COL = "Email sent";
+const RECIPIENT_COL  = "Recipient";
+const EMAIL_SENT_COL = "Email Sent";
  
 /**
- * Send emails from sheet data.
+ * Sends emails from sheet data.
  * @param {string} subjectLine (optional) for the email draft message
  * @param {Sheet} sheet to read data from
 */
@@ -37,49 +42,49 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
                                       Browser.Buttons.OK_CANCEL);
                                       
     if (subjectLine === "cancel" || subjectLine == ""){ 
-    // if no subject line finish up
+    // If no subject line, finishes up
     return;
     }
   }
   
-  // get the draft Gmail message to use as a template
+  // Gets the draft Gmail message to use as a template
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
   
-  // get the data from the passed sheet
+  // Gets the data from the passed sheet
   const dataRange = sheet.getDataRange();
-  // Fetch displayed values for each row in the Range HT Andrew Roberts 
+  // Fetches displayed values for each row in the Range HT Andrew Roberts 
   // https://mashe.hawksey.info/2020/04/a-bulk-email-mail-merge-with-gmail-and-google-sheets-solution-evolution-using-v8/#comment-187490
   // @see https://developers.google.com/apps-script/reference/spreadsheet/range#getdisplayvalues
   const data = dataRange.getDisplayValues();
 
-  // assuming row 1 contains our column headings
+  // Assumes row 1 contains our column headings
   const heads = data.shift(); 
   
-  // get the index of column named 'Email Status' (Assume header names are unique)
+  // Gets the index of the column named 'Email Status' (Assumes header names are unique)
   // @see http://ramblings.mcpher.com/Home/excelquirks/gooscript/arrayfunctions
   const emailSentColIdx = heads.indexOf(EMAIL_SENT_COL);
   
-  // convert 2d array into object array
-  // @see https://stackoverflow.com/a/22917499/1027723
-  // for pretty version see https://mashe.hawksey.info/?p=17869/#comment-184945
+  // Converts 2d array into an object array
+  // See https://stackoverflow.com/a/22917499/1027723
+  // For a pretty version, see https://mashe.hawksey.info/?p=17869/#comment-184945
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
 
-  // used to record sent emails
+  // Creates an array to record sent emails
   const out = [];
 
-  // loop through all the rows of data
+  // Loops through all the rows of data
   obj.forEach(function(row, rowIdx){
-    // only send emails is email_sent cell is blank and not hidden by filter
-    if (row[EMAIL_SENT_COL] == '' && !sheet.isRowHiddenByFilter(rowIdx+2)){
+    // Only sends emails if email_sent cell is blank and not hidden by a filter
+    if (row[EMAIL_SENT_COL] == ''){
       try {
         const msgObj = fillInTemplateFromObject_(emailTemplate.message, row);
 
-        // @see https://developers.google.com/apps-script/reference/gmail/gmail-app#sendEmail(String,String,String,Object)
-        // if you need to send emails with unicode/emoji characters change GmailApp for MailApp
+        // See https://developers.google.com/apps-script/reference/gmail/gmail-app#sendEmail(String,String,String,Object)
+        // If you need to send emails with unicode/emoji characters change GmailApp for MailApp
         // Uncomment advanced parameters as needed (see docs for limitations)
         GmailApp.sendEmail(row[RECIPIENT_COL], msgObj.subject, msgObj.text, {
           htmlBody: msgObj.html,
-          // bcc: 'a.bbc@email.com',
+          // bcc: 'a.bcc@email.com',
           // cc: 'a.cc@email.com',
           // from: 'an.alias@email.com',
           // name: 'name of the sender',
@@ -88,7 +93,7 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
           attachments: emailTemplate.attachments,
           inlineImages: emailTemplate.inlineImages
         });
-        // modify cell to record email sent date
+        // Edits cell to record email sent date
         out.push([new Date()]);
       } catch(e) {
         // modify cell to record error
@@ -99,7 +104,7 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
     }
   });
   
-  // updating the sheet with new data
+  // Updates the sheet with new data
   sheet.getRange(2, emailSentColIdx+1, out.length).setValues(out);
   
   /**
@@ -116,22 +121,22 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
       // get the message object
       const msg = draft.getMessage();
 
-      // Handling inline images and attachments so they can be included in the merge
+      // Handles inline images and attachments so they can be included in the merge
       // Based on https://stackoverflow.com/a/65813881/1027723
-      // Get all attachments and inline image attachments
+      // Gets all attachments and inline image attachments
       const allInlineImages = draft.getMessage().getAttachments({includeInlineImages: true,includeAttachments:false});
       const attachments = draft.getMessage().getAttachments({includeInlineImages: false});
       const htmlBody = msg.getBody(); 
 
-      // Create an inline image object with the image name as key 
+      // Creates an inline image object with the image name as key 
       // (can't rely on image index as array based on insert order)
       const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj) ,{});
 
-      //Regexp to search for all img string positions with cid
+      //Regexp searches for all img string positions with cid
       const imgexp = RegExp('<img.*?src="cid:(.*?)".*?alt="(.*?)"[^\>]+>', 'g');
       const matches = [...htmlBody.matchAll(imgexp)];
 
-      //Initiate the allInlineImages object
+      //Initiates the allInlineImages object
       const inlineImagesObj = {};
       // built an inlineImagesObj from inline image matches
       matches.forEach(match => inlineImagesObj[match[1]] = img_obj[match[2]]);
@@ -164,11 +169,11 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
    * @return {object} message replaced with data
   */
   function fillInTemplateFromObject_(template, data) {
-    // we have two templates one for plain text and the html body
-    // stringifing the object means we can do a global replace
+    // We have two templates one for plain text and the html body
+    // Stringifing the object means we can do a global replace
     let template_string = JSON.stringify(template);
 
-    // token replacement
+    // Token replacement
     template_string = template_string.replace(/{{[^{}]+}}/g, key => {
       return escapeData_(data[key.replace(/[{}]+/g, "")] || "");
     });
