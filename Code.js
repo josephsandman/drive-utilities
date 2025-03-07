@@ -154,67 +154,106 @@ function retrieveFolders() {
  * @param {string} [subjectLine] The subject line of the Gmail draft template.
  * @param {Sheet} [sheet=SpreadsheetApp.getActiveSheet()] The sheet containing the data.
  */
-function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
-  // option to skip browser prompt if you want to use this code in other projects
-  if (!subjectLine){
-    subjectLine = Browser.inputBox("Mail Merge", 
-                                      "Type or copy/paste the subject line of the Gmail " +
-                                      "draft message you would like to mail merge with:",
-                                      Browser.Buttons.OK_CANCEL);
+function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent) {
+  
+  let RECIPIENT_COL = emailRecipients || "Recipient email";
+  let EMAIL_SENT_COL = emailSent || "Email sent";
 
-    if (subjectLine === "cancel" || subjectLine == ""){ 
-    // If no subject line, finishes up
+  // if triggered without proper parameters, show browser prompt
+  if (!subjectLine){
+    subjectLine = Browser.inputBox( "Mail Merge",
+                                    "Type or copy/paste the subject line of the Gmail " +
+                                    "draft message you would like to mail merge with:",
+                                    Browser.Buttons.OK_CANCEL);
+    if (subjectLine === "cancel" || subjectLine == ""){
+      console.error(`ERROR: Abort script due to prompt input: '${subjectLine}'`);
+    // if missing subject line, finish up
     return;
     }
   }
 
-  // Gets the draft Gmail message to use as a template
+  // if parameters not provided, handle with defaults or error
+  if (!thisSheet || !thisTab){
+    sheet = SpreadsheetApp.getActiveSheet();
+  } else {
+    sheet = SpreadsheetApp.openById(getIdFromUrl(thisSheet)).getSheetByName(String(thisTab));
+    if (!sheet) {
+      console.warn(`WARNING: Sheet named '${thisTab}' was not found in '${thisSheet}'.`);
+      sheet = SpreadsheetApp.getActiveSheet();
+      console.info(`Proceeding with the current active sheet as default: '${sheet}'`);
+    }
+  }
+  
+  console.info(`INFO: Sending mail merge from ${JSON.stringify(thisSheet)} with subject: ${JSON.stringify(subjectLine)}`);
+  
+  // get the draft Gmail message to use as a template
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
-
-  // Gets the data from the passed sheet
+  
+  // get the data from the passed sheet
   const dataRange = sheet.getDataRange();
-  // Fetches displayed values for each row in the Range HT Andrew Roberts 
+  // Fetch displayed values for each row in the Range HT Andrew Roberts 
   // https://mashe.hawksey.info/2020/04/a-bulk-email-mail-merge-with-gmail-and-google-sheets-solution-evolution-using-v8/#comment-187490
   // @see https://developers.google.com/apps-script/reference/spreadsheet/range#getdisplayvalues
   const data = dataRange.getDisplayValues();
 
-  // Assumes row 1 contains our column headings
-  const heads = data.shift(); 
+  // assuming row 1 contains our column headings
+  const heads = data.shift();
 
-  // Gets the index of the column named 'Email Status' (Assumes header names are unique)
+  console.log(`DEBUG: Headers array: '${JSON.stringify(heads)}'`);
+
+  // Check if the recipient column exists in headers
+  if (!heads.includes(RECIPIENT_COL)) {
+    console.error(`ERROR: Abort script due to missing column header: '${JSON.stringify(RECIPIENT_COL)}'`);
+    return;
+  }
+
+  // Check if the email sent column exists in headers
+  if (!heads.includes(EMAIL_SENT_COL)) {
+    console.error(`ERROR: Abort script due to missing column header: '${JSON.stringify(EMAIL_SENT_COL)}'`);
+    return;
+  }
+  
+  // get the index of column named 'Email Status' (Assume header names are unique)
   // @see http://ramblings.mcpher.com/Home/excelquirks/gooscript/arrayfunctions
   const emailSentColIdx = heads.indexOf(EMAIL_SENT_COL);
-
-  // Converts 2d array into an object array
-  // See https://stackoverflow.com/a/22917499/1027723
-  // For a pretty version, see https://mashe.hawksey.info/?p=17869/#comment-184945
+  
+  // convert 2d array into object array
+  // @see https://stackoverflow.com/a/22917499/1027723
+  // for pretty version see https://mashe.hawksey.info/?p=17869/#comment-184945
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
 
-  // Creates an array to record sent emails
+  // used to record sent emails
   const out = [];
 
-  // Loops through all the rows of data
+  // loop through all the rows of data
   obj.forEach(function(row, rowIdx){
-    // Only sends emails if email_sent cell is blank and not hidden by a filter
+    // only send emails is email_sent cell is blank and not hidden by filter
     if (row[EMAIL_SENT_COL] == '' && !sheet.isRowHiddenByFilter(rowIdx+2)){
       try {
         const msgObj = fillInTemplateFromObject_(emailTemplate.message, row);
 
-        // See https://developers.google.com/apps-script/reference/gmail/gmail-app#sendEmail(String,String,String,Object)
-        // If you need to send emails with unicode/emoji characters change GmailApp for MailApp
+        // @see https://developers.google.com/apps-script/reference/gmail/gmail-app#sendEmail(String,String,String,Object)
+        // if you need to send emails with unicode/emoji characters change GmailApp for MailApp
+        // there is no from parameter with MailApp
+        // @see https://developers.google.com/apps-script/reference/mail/mail-app#advanced-parameters_1
         // Uncomment advanced parameters as needed (see docs for limitations)
-        MailApp.sendEmail(row[RECIPIENT_COL], msgObj.subject, msgObj.text, {
-          htmlBody: msgObj.html,
-          // bcc: 'joshmckenna+script@grace-bible.org',
-          // cc: 'a.cc@email.com',
-          // from: 'an.alias@email.com',
-          // name: 'name of the sender',
-          // replyTo: 'hr@grace-bible.org',
-          // noReply: true, // if the email should be sent from a generic no-reply email address (not available to gmail.com users)
-          attachments: emailTemplate.attachments,
-          inlineImages: emailTemplate.inlineImages
-        });
-        // Edits cell to record email sent date
+        MailApp.sendEmail(
+          row[RECIPIENT_COL], 
+          msgObj.subject, 
+          msgObj.text, 
+          {
+            htmlBody: msgObj.html,
+            // bcc: 'a.bbc@email.com',
+            // cc: 'a.cc@email.com',
+            // from: 'an.alias@email.com', // not available when using MailApp instead of GmailApp
+            // name: 'name of the sender',
+            // replyTo: 'a.reply@email.com',
+            // noReply: true, // if the email should be sent from a generic no-reply email address (not available to gmail.com users)
+            attachments: emailTemplate.attachments,
+            inlineImages: emailTemplate.inlineImages
+          }
+        );
+        // modify cell to record email sent date
         out.push([new Date()]);
       } catch(e) {
         // modify cell to record error
@@ -224,16 +263,15 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
       out.push([row[EMAIL_SENT_COL]]);
     }
   });
-
-  // Updates the sheet with new data
+  
+  // updating the sheet with new data
   sheet.getRange(2, emailSentColIdx+1, out.length).setValues(out);
-
+  
   /**
-   * Retrieves a Gmail draft message by matching the subject line.
-   * @param {string} subject_line The subject line to search for.
-   * @return {object} An object containing the subject, plain and HTML message body, and attachments.
-   * @private  // This indicates it's an internal helper function
-   */
+   * Get a Gmail draft message by matching the subject line.
+   * @param {string} subject_line to search for draft message
+   * @return {object} containing the subject, plain and html message body and attachments
+  */
   function getGmailTemplateFromDrafts_(subject_line){
     try {
       // get drafts
@@ -243,22 +281,22 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
       // get the message object
       const msg = draft.getMessage();
 
-      // Handles inline images and attachments so they can be included in the merge
+      // Handling inline images and attachments so they can be included in the merge
       // Based on https://stackoverflow.com/a/65813881/1027723
-      // Gets all attachments and inline image attachments
+      // Get all attachments and inline image attachments
       const allInlineImages = draft.getMessage().getAttachments({includeInlineImages: true,includeAttachments:false});
       const attachments = draft.getMessage().getAttachments({includeInlineImages: false});
       const htmlBody = msg.getBody(); 
 
-      // Creates an inline image object with the image name as key 
+      // Create an inline image object with the image name as key 
       // (can't rely on image index as array based on insert order)
       const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj) ,{});
 
-      //Regexp searches for all img string positions with cid
+      //Regexp to search for all img string positions with cid
       const imgexp = RegExp('<img.*?src="cid:(.*?)".*?alt="(.*?)"[^\>]+>', 'g');
       const matches = [...htmlBody.matchAll(imgexp)];
 
-      //Initiates the allInlineImages object
+      //Initiate the allInlineImages object
       const inlineImagesObj = {};
       // built an inlineImagesObj from inline image matches
       matches.forEach(match => inlineImagesObj[match[1]] = img_obj[match[2]]);
@@ -266,15 +304,15 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
       return {message: {subject: subject_line, text: msg.getPlainBody(), html:htmlBody}, 
               attachments: attachments, inlineImages: inlineImagesObj };
     } catch(e) {
-      throw new Error("Oops - can't find Gmail draft");
+      console.error(`ERROR: No Gmail draft found: '${e.message}'`);
+      return;
     }
 
     /**
-     * Filters draft objects with the matching subject line.
-     * @param {string} subject_line The subject line to search for.
-     * @return {object} The GmailDraft object.
-     * @private
-     */
+     * Filter draft objects with the matching subject linemessage by matching the subject line.
+     * @param {string} subject_line to search for draft message
+     * @return {object} GmailDraft object
+    */
     function subjectFilter_(subject_line){
       return function(element) {
         if (element.getMessage().getSubject() === subject_line) {
@@ -283,34 +321,32 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
       }
     }
   }
-
+  
   /**
-   * Fills in a template string with data from an object.
+   * Fill template string with data object
    * @see https://stackoverflow.com/a/378000/1027723
-   * @param {string} template The template string containing {{}} markers.
-   * @param {object} data The data object used to replace the markers.
-   * @return {object} The message with data filled in.
-   * @private
-   */
+   * @param {string} template string containing {{}} markers which are replaced with data
+   * @param {object} data object used to replace {{}} markers
+   * @return {object} message replaced with data
+  */
   function fillInTemplateFromObject_(template, data) {
-    // We have two templates one for plain text and the html body
-    // Stringifing the object means we can do a global replace
+    // we have two templates one for plain text and the html body
+    // stringifing the object means we can do a global replace
     let template_string = JSON.stringify(template);
 
-    // Token replacement
+    // token replacement
     template_string = template_string.replace(/{{[^{}]+}}/g, key => {
       return escapeData_(data[key.replace(/[{}]+/g, "")] || "");
     });
     return JSON.parse(template_string);
   }
-  
+
   /**
-   * Escapes special characters in a string to make it JSON safe.
+   * Escape cell data to make JSON safe
    * @see https://stackoverflow.com/a/9204218/1027723
-   * @param {string} str The string to escape.
-   * @return {string} The escaped string.
-   * @private
-   */
+   * @param {string} str to escape JSON special characters from
+   * @return {string} escaped string
+  */
   function escapeData_(str) {
     return str
       .replace(/[\\]/g, '\\\\')
@@ -318,7 +354,7 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
       .replace(/[\/]/g, '\\/')
       .replace(/[\b]/g, '\\b')
       .replace(/[\f]/g, '\\f')
-      .replace(/[\n]/g, '<br>')
+      .replace(/[\n]/g, '\\n')
       .replace(/[\r]/g, '\\r')
       .replace(/[\t]/g, '\\t');
   };
