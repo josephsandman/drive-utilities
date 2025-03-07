@@ -315,7 +315,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     }
   }
   
-  console.info(`INFO: Sending mail merge from ${JSON.stringify(thisSheet)} with subject: ${JSON.stringify(subjectLine)}`);
+  console.info(`INFO: Sending mail merge from '${thisSheet}' with subject: '${subjectLine}'`);
   
   // get the draft Gmail message to use as a template
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
@@ -330,17 +330,17 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   // assuming row 1 contains our column headings
   const heads = data.shift();
 
-  console.log(`DEBUG: Headers array: '${JSON.stringify(heads)}'`);
+  console.log(`DEBUG: Headers array: '${heads}'`);
 
   // Check if the recipient column exists in headers
   if (!heads.includes(RECIPIENT_COL)) {
-    console.error(`ERROR: Abort script due to missing column header: '${JSON.stringify(RECIPIENT_COL)}'`);
+    console.error(`ERROR: Abort script due to missing column header: '${RECIPIENT_COL}'`);
     return;
   }
 
   // Check if the email sent column exists in headers
   if (!heads.includes(EMAIL_SENT_COL)) {
-    console.error(`ERROR: Abort script due to missing column header: '${JSON.stringify(EMAIL_SENT_COL)}'`);
+    console.error(`ERROR: Abort script due to missing column header: '${EMAIL_SENT_COL}'`);
     return;
   }
   
@@ -493,7 +493,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
 
 // console.time(`START: `); // start a process timer
 // console.timeEnd(`END: `); // end a proceess timer
-// console.log(`DEBUG: Constant message strong here, followed by variable: '${JSON.stringify(variable)}'`); // debug
-// console.info(`INFO: Constant message strong here, followed by variable: '${JSON.stringify(variable)}'`); // info
-// console.warn(`WARNING: Constant message strong here, followed by variable: '${JSON.stringify(variable)}'`); // warning
-// console.error(`ERROR: Constant message strong here, followed by variable: '${JSON.stringify(variable)}'`); // error
+// console.log(`DEBUG: Constant message strong here, followed by variable: '${variable}'`); // debug
+// console.info(`INFO: Constant message strong here, followed by variable: '${variable}'`); // info
+// console.warn(`WARNING: Constant message strong here, followed by variable: '${variable}'`); // warning
+// console.error(`ERROR: Constant message strong here, followed by variable: '${variable}'`); // error
