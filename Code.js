@@ -268,26 +268,27 @@ function retrieveFolders() {
  * the status of sent emails directly into the specified column.
  *
  * If a subject line is not provided, the function will prompt the user to enter one.
- * If the template or necessary sheet cannot be found, the function will log an error
- * and terminate execution gracefully.
+ * If the recipient email header or email sent header is not provided, the function
+ * will prompt the user for these header names. If the template or necessary sheet 
+ * cannot be found, the function will log an error and terminate execution gracefully.
  *
- * @param {string} subjectLine - The subject line for the email draft message. Optional; if not provided, will prompt the user.
+ * @param {string} [subjectLine] - The subject line for the email draft message. Optional; if not provided, will prompt the user.
  * @param {string} thisSheet - The Google Sheet file URL or ID containing the mail merge data.
  * @param {string} thisTab - The name of the tab within the Google Sheet that has the mail merge data.
- * @param {string} emailRecipients - The header of the column containing recipient email addresses.
- * @param {string} emailSent - The header of the column where the date the email was sent will be logged.
+ * @param {string} [emailRecipients] - The header of the column containing recipient email addresses. Optional; if not provided, will prompt the user for this header.
+ * @param {string} [emailSent] - The header of the column where the date the email was sent will be logged. Optional; if not provided, will prompt the user for this header.
  *
  * @return {void} This function does not return a value.
  *
  * @throws {Error} Throws an error if the specified sheet, tab, or required headers do not exist in the provided data.
  *
  * @example
- * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge", "Recipient email", "Email sent");
+ * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge");
  */
 function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent) {
   
-  let RECIPIENT_COL = emailRecipients || "Recipient email";
-  let EMAIL_SENT_COL = emailSent || "Email sent";
+  let RECIPIENT_COL = emailRecipients || getUserInput("Enter the header name for recipient email addresses:");
+  let EMAIL_SENT_COL = emailSent || getUserInput("Enter the header name for email sent status:");
 
   // if triggered without proper parameters, show browser prompt
   if (!subjectLine){
