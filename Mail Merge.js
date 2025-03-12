@@ -1,3 +1,9 @@
+/**
+ * @OnlyCurrentDoc
+ * Indicates that this automation will only attempt to read or modify the spreadsheet this script is bound to.
+ * The authorization request message presented to users reflects the limited scope.
+ */
+
 // To learn how to use this script, refer to the documentation:
 // https://developers.google.com/apps-script/samples/automations/mail-merge
 
@@ -15,10 +21,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
- 
-/**
- * @OnlyCurrentDoc
 */
  
 /**
