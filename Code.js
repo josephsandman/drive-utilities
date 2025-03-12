@@ -461,15 +461,16 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
    * @return {object} message replaced with data
   */
   function fillInTemplateFromObject_(template, data) {
-    // we have two templates one for plain text and the html body
-    // stringifing the object means we can do a global replace
+    // We have two templates one for plain text and the html body
+    // Stringifying the object means we can do a global replace
     let template_string = JSON.stringify(template);
 
-    // token replacement
+    // Token replacement
     template_string = template_string.replace(/{{[^{}]+}}/g, key => {
-      return escapeData_(data[key.replace(/[{}]+/g, "")] || "");
+      const text = data[key.replace(/[{}]+/g, "")] || "";
+      return escapeData_(text.replace(/\n/g, '<br>')); // Replace newlines with <br> for HTML
     });
-    return JSON.parse(template_string);
+    return  JSON.parse(template_string);
   }
 
   /**
