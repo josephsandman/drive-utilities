@@ -243,6 +243,8 @@ function retrieveFolders() {
  * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge");
  */
 function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent) {
+  console.log(`DEBUG: Parameters received by sendEmails(): \rsubjectLine: ${subjectLine}\rthisSheet: ${thisSheet}\rthisTab: ${thisTab}\remailRecipients: ${emailRecipients}\remailSent: ${emailSent}`);
+  console.time('sendEmails() processing time');
   
   let RECIPIENT_COL = emailRecipients || getUserInput("Enter the header name for recipient email addresses:");
   let EMAIL_SENT_COL = emailSent || getUserInput("Enter the header name for email sent status:");
@@ -253,7 +255,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
                                     "draft message you would like to mail merge with:",
                                     Browser.Buttons.OK_CANCEL);
     if (subjectLine === "cancel" || subjectLine === "") {
-      console.error(`ERROR: Abort script due to prompt input: '${subjectLine}'`);
+      console.error(`ERROR: Abort script due to prompt response: '${subjectLine}'`);
       return;
     }
   }
@@ -265,11 +267,11 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     if (!sheet) {
       console.warn(`WARNING: Sheet named '${thisTab}' was not found in '${thisSheet}'.`);
       sheet = SpreadsheetApp.getActiveSheet();
-      console.info(`Proceeding with the current active sheet as default: '${sheet}'`);
+      console.log(`DEBUG: Proceeding with the current active sheet as default: '${sheet}'`);
     }
   }
   
-  console.info(`INFO: Sending mail merge from '${sheet}' with subject: '${subjectLine}'`);
+  console.info(`INFO: Sending mail merge from '${sheet.getName()}' with subject: '${subjectLine}'`);
   
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
   
@@ -277,6 +279,11 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   const data = dataRange.getDisplayValues();
 
   const heads = data.shift();
+
+  if (!isValidHeaderRow(heads)) {
+    console.error(`ERROR: Header row must contain at least two unique headers. Invalid headers: '${heads}'`);
+    return;
+  }
 
   console.log(`DEBUG: Headers array: '${heads}'`);
 
@@ -300,8 +307,10 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
 
   const out = [];
 
+  console.time("Total row processing time");
   obj.forEach(function(row, rowIdx) {
-    if (row[EMAIL_SENT_COL] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
+    if (row[RECIPIENT_COL] === '' && row[EMAIL_SENT_COL] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
+      console.time(`Row '${rowIdx + 2}' processing time `);
       try {
         const msgObj = fillInTemplateFromObject_(emailTemplate.message, row);
 
@@ -321,13 +330,23 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
           }
         );
         out.push([new Date()]);
+        console.info(`INFO: Email sent to '${row[RECIPIENT_COL]}' (Row ${rowIdx + 2})`);
       } catch (e) {
         out.push([e.message]);
+        console.error(`ERROR: Failed to send email to '${row[RECIPIENT_COL]}' (Row ${rowIdx + 2}). Error: ${e.message}`);
       }
+      console.timeEnd(`Row '${rowIdx + 2}' processing time `);
     } else {
+      if (row[EMAIL_SENT_COL] !== '') {
+        console.log(`DEBUG: Skipping Row ${rowIdx + 2} - Email already sent.`);
+      } 
+      if (sheet.isRowHiddenByFilter(rowIdx + 2)) {
+        console.log(`DEBUG: Skipping Row ${rowIdx + 2} - Row hidden by filter.`);
+      }
       out.push([row[EMAIL_SENT_COL]]);
     }
   });
+  console.timeEnd("Total row processing time");
   
   sheet.getRange(2, emailSentColIdx + 1, out.length).setValues(out);
   
@@ -338,22 +357,34 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
    * @return {object} Contains the subject, plain and HTML message body, and attachments.
    */
   function getGmailTemplateFromDrafts_(subject_line) {
+    console.info(`INFO: Searching for draft with subject line: '${subject_line}'`);
     try {
       const drafts = GmailApp.getDrafts();
+      console.debug(`DEBUG: Total drafts retrieved: ${drafts.length}`);
       const draft = drafts.filter(subjectFilter_(subject_line))[0];
+      if (!draft) {
+        console.warn(`WARNING: No draft found matching the subject line: '${subject_line}'`);
+        return;
+      } else {
+        console.info(`INFO: Draft found with subject: '${draft.getMessage().getSubject()}'`);
+      }
       const msg = draft.getMessage();
 
       const allInlineImages = draft.getMessage().getAttachments({includeInlineImages: true, includeAttachments: false});
+      console.debug(`DEBUG: Total inline images found: ${allInlineImages.length}`);
       const attachments = draft.getMessage().getAttachments({includeInlineImages: false});
-      const htmlBody = msg.getBody(); 
+      const htmlBody = msg.getBody();
+      console.debug(`DEBUG: Draft HTML body length: ${htmlBody.length}`);
 
       const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj), {});
 
       const imgexp = RegExp('<img.*?src="cid:(.*?)".*?alt="(.*?)"[^\>]+>', 'g');
       const matches = [...htmlBody.matchAll(imgexp)];
+      console.debug(`DEBUG: Total inline image matches found in HTML body: ${matches.length}`);
 
       const inlineImagesObj = {};
       matches.forEach(match => inlineImagesObj[match[1]] = img_obj[match[2]]);
+      console.info(`INFO: Returning message details for subject: '${subject_line}'`);
 
       return {
         message: {
@@ -418,6 +449,13 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
       .replace(/[\r]/g, '\\r')
       .replace(/[\t]/g, '\\t');
   };
+
+  function isValidHeaderRow(headers) {
+    const uniqueHeaders = new Set(headers.filter(header => header.trim() !== ""));
+    return uniqueHeaders.size >= 2;
+  };
+
+  console.timeEnd('sendEmails() processing time');
 }
 
 // console.time(`START: `); // start a process timer
