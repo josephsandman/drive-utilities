@@ -269,7 +269,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     }
   }
   
-  console.info(`INFO: Sending mail merge from '${thisSheet}' with subject: '${subjectLine}'`);
+  console.info(`INFO: Sending mail merge from '${sheet}' with subject: '${subjectLine}'`);
   
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
   
@@ -290,7 +290,11 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     return;
   }
   
+  console.log(`DEBUG: Ready to define emailSentColIdx: '${heads.indexOf(EMAIL_SENT_COL)}'`);
+  
   const emailSentColIdx = heads.indexOf(EMAIL_SENT_COL);
+
+  console.log(`DEBUG: Email sent column: '${emailSentColIdx}'`);
   
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
 
