@@ -33,7 +33,7 @@ const EMAIL_SENT_COL = "Email Sent";
  * @param {string} subjectLine (optional) for the email draft message
  * @param {Sheet} sheet to read data from
 */
-function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
+function originalMailMerge(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
   // option to skip browser prompt if you want to use this code in other projects
   if (!subjectLine){
     subjectLine = Browser.inputBox("Mail Merge", 
@@ -170,12 +170,13 @@ function sendEmails(subjectLine, sheet=SpreadsheetApp.getActiveSheet()) {
   */
   function fillInTemplateFromObject_(template, data) {
     // We have two templates one for plain text and the html body
-    // Stringifing the object means we can do a global replace
+    // Stringifying the object means we can do a global replace
     let template_string = JSON.stringify(template);
 
     // Token replacement
     template_string = template_string.replace(/{{[^{}]+}}/g, key => {
-      return escapeData_(data[key.replace(/[{}]+/g, "")] || "");
+      const text = data[key.replace(/[{}]+/g, "")] || "";
+      return escapeData_(text.replace(/\n/g, '<br>')); // Replace newlines with <br> for HTML
     });
     return  JSON.parse(template_string);
   }
