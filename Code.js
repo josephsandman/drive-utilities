@@ -1,27 +1,20 @@
 /**
  * @OnlyCurrentDoc
- * The above comment specifies that this automation will only
- * attempt to read or modify the spreadsheet this script is bound to.
- * The authorization request message presented to users reflects the
- * limited scope.
+ * Indicates that this automation will only attempt to read or modify the spreadsheet this script is bound to.
+ * The authorization request message presented to users reflects the limited scope.
  */
 
 /**
  * Adds custom menus to the Google Sheets UI upon opening the spreadsheet.
- *
- * This function is automatically triggered when the spreadsheet is opened.
- * It creates a custom menu titled 'Drive utilities' that includes items for 
- * creating named files and subfolders, as well as retrieving file and 
- * subfolder links. Additionally, it adds a 'Gmail utilities' menu for sending 
- * mail merges. 
- *
- * @param {Event} e - The event object containing information about the opening
- * event (optional, for future use if needed).
- *
+ * 
+ * This function is automatically triggered when the spreadsheet is opened and 
+ * creates custom menus titled 'Drive utilities' and 'Gmail utilities'.
+ * 
+ * @param {Event} e - The event object containing information about the opening event (optional).
+ * 
  * @return {void} This function does not return a value.
- *
+ * 
  * @example
- * // Automatically called when the spreadsheet is opened
  * onOpen();
  */
 function onOpen(e) {
@@ -40,86 +33,70 @@ function onOpen(e) {
 
 /**
  * Prompts the user for input and returns their response as a string.
- *
- * This function displays a prompt dialog to the user with a specified 
- * message. It waits for the user's input and returns the text 
- * response provided. If the user cancels the prompt, the returned
- * value will be an empty string.
- *
+ * 
+ * Displays a prompt dialog to the user; if canceled, returns an empty string.
+ * 
  * @param {string} promptMessage - The message to display in the prompt dialog.
- * @return {string} The user's input from the prompt; an empty string if the prompt is canceled.
- *
+ * @return {string} The user's input from the prompt; an empty string if canceled.
+ * 
  * @example
  * const userInput = getUserInput("Please enter your name:");
  * Logger.log(`User input: ${userInput}`);
  */
-function getUserInput(promptMessage) { // Helper function to handle user inputs
+function getUserInput(promptMessage) {
   return SpreadsheetApp.getUi().prompt(promptMessage).getResponseText();
 }
 
 /**
  * Extracts the folder ID from a Google Drive folder URL.
- *
+ * 
  * This function takes a Google Drive folder URL as input and uses a regular 
- * expression to extract the folder ID portion of the URL. The folder ID is 
- * a unique identifier used by Google Drive to reference specific folders.
- *
- * If the URL is valid and contains a folder ID, the function returns the 
- * ID as a string. If the URL does not match the expected format or if 
- * no ID is found, it will return "undefined" instead of null.
- *
- * @param {string} url - The Google Drive folder URL from which to extract the ID.
+ * expression to extract the folder ID. If no valid ID is found, returns "undefined".
+ * 
+ * @param {string} url - The Google Drive folder URL.
  * @return {string|undefined} The folder ID, or undefined if not found.
- *
- * @throws {Error} Throws an error if the input URL is not a valid string.
- *
+ * 
+ * @throws {Error} If the input URL is not a valid string.
+ * 
  * @example
  * const folderId = getIdFromUrl("https://drive.google.com/drive/folders/1Cf1NbSxGq8po5fMpcwsCOq4Wcj6AwBXt");
  * Logger.log(`Extracted folder ID: ${folderId}`);
  */
-function getIdFromUrl(url) { 
+function getIdFromUrl(url) {
   return url.match(/[-\w]{25,}(?!.*[-\w]{25,})/).toString();
 }
 
 /**
  * Removes the query string from a Google Drive URL.
- *
- * This function takes a Google Drive URL as input and uses a regular expression 
- * to remove everything following the '?' character, effectively stripping 
- * the query parameters from the URL. If the URL does not contain a query string, 
- * the original URL is returned unchanged.
- *
- * @param {string} url - The Google Drive folder URL from which to remove query parameters.
- * @return {string} The URL without the query string. If no query string is present, the original URL is returned.
- *
+ * 
+ * This function removes any parameters following the '?' character in the URL.
+ * 
+ * @param {string} url - The Google Drive folder URL.
+ * @return {string} The URL without the query string.
+ * 
  * @example
  * const cleanUrl = removeQueryFromUrl("https://drive.google.com/drive/folders/1Cf1NbSxGq8po5fMpcwsCOq4Wcj6AwBXt?query=someParam");
  * Logger.log(`Clean URL: ${cleanUrl}`);
  */
 function removeQueryFromUrl(url) {
-  const myRegex = /\?.*$/; // Regular expression to match query strings
+  const myRegex = /\?.*$/;
   if (myRegex.test(String(url))) {
-    return String(url).replace(myRegex, ''); // Return URL without query parameters
+    return String(url).replace(myRegex, '');
   }
-  return url; // Return original URL if no query string is found
+  return url;
 }
 
 /**
  * Creates copies of a template file with specified names in a destination folder.
- *
- * This function prompts the user for a template file URL, the sheet URL, 
- * the tab name containing filenames, the range of filenames, and the 
- * destination folder URL. It then creates copies of the template file 
- * for each specified filename and saves the URLs of the new files back 
- * to the specified column in the spreadsheet.
- *
+ * 
+ * Prompts the user for a template file URL, filenames, and a destination folder URL.
+ * Creates copies for each filename and saves the URLs back to the specified column in the spreadsheet.
+ * 
  * @return {void} This function does not return a value.
- *
- * @throws {Error} Throws an error if any of the inputs are invalid or if 
- * there is an issue accessing or creating files in Google Drive.
- *
+ * 
+ * @throws {Error} If any of the inputs are invalid or if there is an issue accessing or creating files.
+ * 
  * @example
- * // This function will be executed when an appropriate trigger is set.
  * copyFiles();
  */
 function copyFiles() {
@@ -129,7 +106,7 @@ function copyFiles() {
   var filenamesTabName = getUserInput('Enter the filenames tab name');
   var filenamesRange = getUserInput('Enter filename list range');
   var destinationFolderUrl = getUserInput('Enter destination folder URL');
-  var urlWriteColumn = getUserInput('Enter column number to write URLs'); // Column index for writing URLs
+  var urlWriteColumn = getUserInput('Enter column number to write URLs');
   
   var sheet = SpreadsheetApp.openByUrl(filenamesSheetUrl).getSheetByName(filenamesTabName);
   var range = sheet.getRange(filenamesRange);
@@ -147,27 +124,22 @@ function copyFiles() {
 
 /**
  * Creates new folders with specified names in a destination folder.
- *
- * This function prompts the user for a Google Sheet URL containing a list of folder names,
- * the specific tab name within that sheet, the range of folder names, and the destination
- * folder URL. It then creates new folders in the specified destination folder for each 
- * valid folder name and saves the URLs of the newly created folders back to the specified 
- * column in the Google Sheet.
- *
+ * 
+ * Prompts the user for a Google Sheet URL with folder names and creates new folders
+ * in the specified destination folder.
+ * 
  * @return {void} This function does not return a value.
- *
- * @throws {Error} Throws an error if any of the inputs are invalid, if it fails to create 
- * folders in Google Drive, or if there are issues accessing the specified Google Sheet.
- *
+ * 
+ * @throws {Error} If any of the inputs are invalid or if there are issues creating folders.
+ * 
  * @example
- * // This function will be executed when invoked by an appropriate trigger.
  * copyFolders();
  */
 function copyFolders() {
   var foldersSheetUrl = getUserInput('Enter the foldernames list sheet URL');
   var foldersTabName = getUserInput('Enter the foldernames sheet tab name');
   var foldernamesRange = getUserInput('Enter filename list range');
-  var urlWriteColumn = getUserInput('Enter column number to write URLs'); // Column index for writing URLs
+  var urlWriteColumn = getUserInput('Enter column number to write URLs');
   var destinationFolderUrl = getUserInput('Enter destination folder URL');
   
   var sheet = SpreadsheetApp.openByUrl(foldersSheetUrl).getSheetByName(foldersTabName);
@@ -185,21 +157,16 @@ function copyFolders() {
 }
 
 /**
- * Retrieves the names and URLs of all files within a specified Google Drive folder 
- * and writes them to the active sheet.
- *
- * This function prompts the user to enter the public link or ID of a parent folder 
- * in Google Drive. It retrieves all files within that folder, constructs their 
- * URLs, and populates the active Google Sheet with the file names and their corresponding 
- * URLs, starting from the second row.
- *
+ * Retrieves the names and URLs of all files within a specified Google Drive folder and writes them to the active sheet.
+ * 
+ * Prompts the user to enter a public link or ID of a parent folder, retrieves all files,
+ * and populates the active Google Sheet with the file names and URLs starting from the second row.
+ * 
  * @return {void} This function does not return a value.
- *
- * @throws {Error} Throws an error if the specified folder cannot be accessed, 
- * if there are issues retrieving files, or if the input for the folder link is invalid.
- *
+ * 
+ * @throws {Error} If the specified folder cannot be accessed or if there are issues retrieving files.
+ * 
  * @example
- * // This function will be executed when invoked by a user action (button click or menu item).
  * retrieveFiles();
  */
 function retrieveFiles() {
@@ -223,21 +190,16 @@ function retrieveFiles() {
 }
 
 /**
- * Retrieves the names and URLs of all subfolders within a specified Google Drive folder 
- * and writes them to the active sheet.
- *
- * This function prompts the user to enter the public link or ID of a parent folder in 
- * Google Drive. It retrieves all subfolders within that folder, constructs their 
- * URLs, and populates the active Google Sheet with the subfolder names and their 
- * corresponding URLs, starting from the second row.
- *
+ * Retrieves the names and URLs of all subfolders within a specified Google Drive folder and writes them to the active sheet.
+ * 
+ * Prompts the user to enter a public link or ID of a parent folder, retrieves all subfolders,
+ * and populates the active Google Sheet with their names and URLs.
+ * 
  * @return {void} This function does not return a value.
- *
- * @throws {Error} Throws an error if the specified folder cannot be accessed, 
- * if there are issues retrieving subfolders, or if the input for the folder link is invalid.
- *
+ * 
+ * @throws {Error} If the specified folder cannot be accessed or if there are issues retrieving subfolders.
+ * 
  * @example
- * // This function will be executed when invoked by a user action (button click or menu item).
  * retrieveFolders();
  */
 function retrieveFolders() {
@@ -262,26 +224,21 @@ function retrieveFolders() {
 
 /**
  * Sends emails to recipients based on data from a specified Google Sheet.
- *
- * This function retrieves recipient email addresses and the associated email sent status
- * from the provided sheet. It utilizes a Gmail draft message as a template and logs
- * the status of sent emails directly into the specified column.
- *
- * If a subject line is not provided, the function will prompt the user to enter one.
- * If the recipient email header or email sent header is not provided, the function
- * will prompt the user for these header names. If the template or necessary sheet 
- * cannot be found, the function will log an error and terminate execution gracefully.
- *
- * @param {string} [subjectLine] - The subject line for the email draft message. Optional; if not provided, will prompt the user.
- * @param {string} thisSheet - The Google Sheet file URL or ID containing the mail merge data.
- * @param {string} thisTab - The name of the tab within the Google Sheet that has the mail merge data.
- * @param {string} [emailRecipients] - The header of the column containing recipient email addresses. Optional; if not provided, will prompt the user for this header.
- * @param {string} [emailSent] - The header of the column where the date the email was sent will be logged. Optional; if not provided, will prompt the user for this header.
- *
+ * 
+ * Retrieves recipient email addresses and the associated email sent status and 
+ * uses a Gmail draft message as a template. Logs the status of sent emails directly
+ * into the specified column. Prompts the user for missing header names if not provided.
+ * 
+ * @param {string} [subjectLine] - Subject line for the email draft message. Optional; prompts if not provided.
+ * @param {string} thisSheet - The Google Sheet file URL or ID with mail merge data.
+ * @param {string} thisTab - The name of the tab within the Google Sheet with mail merge data.
+ * @param {string} [emailRecipients] - Header of the column containing recipient email addresses. Optional; prompts if not provided.
+ * @param {string} [emailSent] - Header of the column where email sent dates are logged. Optional; prompts if not provided.
+ * 
  * @return {void} This function does not return a value.
- *
- * @throws {Error} Throws an error if the specified sheet, tab, or required headers do not exist in the provided data.
- *
+ * 
+ * @throws {Error} If the specified sheet, tab, or required headers do not exist.
+ * 
  * @example
  * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge");
  */
@@ -290,21 +247,18 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   let RECIPIENT_COL = emailRecipients || getUserInput("Enter the header name for recipient email addresses:");
   let EMAIL_SENT_COL = emailSent || getUserInput("Enter the header name for email sent status:");
 
-  // if triggered without proper parameters, show browser prompt
-  if (!subjectLine){
+  if (!subjectLine) {
     subjectLine = Browser.inputBox( "Mail Merge",
                                     "Type or copy/paste the subject line of the Gmail " +
                                     "draft message you would like to mail merge with:",
                                     Browser.Buttons.OK_CANCEL);
-    if (subjectLine === "cancel" || subjectLine == ""){
+    if (subjectLine === "cancel" || subjectLine === "") {
       console.error(`ERROR: Abort script due to prompt input: '${subjectLine}'`);
-    // if missing subject line, finish up
-    return;
+      return;
     }
   }
 
-  // if parameters not provided, handle with defaults or error
-  if (!thisSheet || !thisTab){
+  if (!thisSheet || !thisTab) {
     sheet = SpreadsheetApp.getActiveSheet();
   } else {
     sheet = SpreadsheetApp.openById(getIdFromUrl(thisSheet)).getSheetByName(String(thisTab));
@@ -317,57 +271,36 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   
   console.info(`INFO: Sending mail merge from '${thisSheet}' with subject: '${subjectLine}'`);
   
-  // get the draft Gmail message to use as a template
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
   
-  // get the data from the passed sheet
   const dataRange = sheet.getDataRange();
-  // Fetch displayed values for each row in the Range HT Andrew Roberts 
-  // https://mashe.hawksey.info/2020/04/a-bulk-email-mail-merge-with-gmail-and-google-sheets-solution-evolution-using-v8/#comment-187490
-  // @see https://developers.google.com/apps-script/reference/spreadsheet/range#getdisplayvalues
   const data = dataRange.getDisplayValues();
 
-  // assuming row 1 contains our column headings
   const heads = data.shift();
 
   console.log(`DEBUG: Headers array: '${heads}'`);
 
-  // Check if the recipient column exists in headers
   if (!heads.includes(RECIPIENT_COL)) {
     console.error(`ERROR: Abort script due to missing column header: '${RECIPIENT_COL}'`);
     return;
   }
 
-  // Check if the email sent column exists in headers
   if (!heads.includes(EMAIL_SENT_COL)) {
     console.error(`ERROR: Abort script due to missing column header: '${EMAIL_SENT_COL}'`);
     return;
   }
   
-  // get the index of column named 'Email Status' (Assume header names are unique)
-  // @see http://ramblings.mcpher.com/Home/excelquirks/gooscript/arrayfunctions
   const emailSentColIdx = heads.indexOf(EMAIL_SENT_COL);
   
-  // convert 2d array into object array
-  // @see https://stackoverflow.com/a/22917499/1027723
-  // for pretty version see https://mashe.hawksey.info/?p=17869/#comment-184945
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
 
-  // used to record sent emails
   const out = [];
 
-  // loop through all the rows of data
-  obj.forEach(function(row, rowIdx){
-    // only send emails is email_sent cell is blank and not hidden by filter
-    if (row[EMAIL_SENT_COL] == '' && !sheet.isRowHiddenByFilter(rowIdx+2)){
+  obj.forEach(function(row, rowIdx) {
+    if (row[EMAIL_SENT_COL] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
       try {
         const msgObj = fillInTemplateFromObject_(emailTemplate.message, row);
 
-        // @see https://developers.google.com/apps-script/reference/gmail/gmail-app#sendEmail(String,String,String,Object)
-        // if you need to send emails with unicode/emoji characters change GmailApp for MailApp
-        // there is no from parameter with MailApp
-        // @see https://developers.google.com/apps-script/reference/mail/mail-app#advanced-parameters_1
-        // Uncomment advanced parameters as needed (see docs for limitations)
         MailApp.sendEmail(
           row[RECIPIENT_COL], 
           msgObj.subject, 
@@ -376,7 +309,6 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
             htmlBody: msgObj.html,
             // bcc: 'a.bbc@email.com',
             // cc: 'a.cc@email.com',
-            // from: 'an.alias@email.com', // not available when using MailApp instead of GmailApp
             // name: 'name of the sender',
             // replyTo: 'a.reply@email.com',
             // noReply: true, // if the email should be sent from a generic no-reply email address (not available to gmail.com users)
@@ -384,10 +316,8 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
             inlineImages: emailTemplate.inlineImages
           }
         );
-        // modify cell to record email sent date
         out.push([new Date()]);
-      } catch(e) {
-        // modify cell to record error
+      } catch (e) {
         out.push([e.message]);
       }
     } else {
@@ -395,56 +325,53 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     }
   });
   
-  // updating the sheet with new data
-  sheet.getRange(2, emailSentColIdx+1, out.length).setValues(out);
+  sheet.getRange(2, emailSentColIdx + 1, out.length).setValues(out);
   
   /**
    * Get a Gmail draft message by matching the subject line.
-   * @param {string} subject_line to search for draft message
-   * @return {object} containing the subject, plain and html message body and attachments
-  */
-  function getGmailTemplateFromDrafts_(subject_line){
+   * 
+   * @param {string} subject_line - Subject line to search for the draft message.
+   * @return {object} Contains the subject, plain and HTML message body, and attachments.
+   */
+  function getGmailTemplateFromDrafts_(subject_line) {
     try {
-      // get drafts
       const drafts = GmailApp.getDrafts();
-      // filter the drafts that match subject line
       const draft = drafts.filter(subjectFilter_(subject_line))[0];
-      // get the message object
       const msg = draft.getMessage();
 
-      // Handling inline images and attachments so they can be included in the merge
-      // Based on https://stackoverflow.com/a/65813881/1027723
-      // Get all attachments and inline image attachments
-      const allInlineImages = draft.getMessage().getAttachments({includeInlineImages: true,includeAttachments:false});
+      const allInlineImages = draft.getMessage().getAttachments({includeInlineImages: true, includeAttachments: false});
       const attachments = draft.getMessage().getAttachments({includeInlineImages: false});
       const htmlBody = msg.getBody(); 
 
-      // Create an inline image object with the image name as key 
-      // (can't rely on image index as array based on insert order)
-      const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj) ,{});
+      const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj), {});
 
-      //Regexp to search for all img string positions with cid
       const imgexp = RegExp('<img.*?src="cid:(.*?)".*?alt="(.*?)"[^\>]+>', 'g');
       const matches = [...htmlBody.matchAll(imgexp)];
 
-      //Initiate the allInlineImages object
       const inlineImagesObj = {};
-      // built an inlineImagesObj from inline image matches
       matches.forEach(match => inlineImagesObj[match[1]] = img_obj[match[2]]);
 
-      return {message: {subject: subject_line, text: msg.getPlainBody(), html:htmlBody}, 
-              attachments: attachments, inlineImages: inlineImagesObj };
-    } catch(e) {
+      return {
+        message: {
+          subject: subject_line,
+          text: msg.getPlainBody(),
+          html: htmlBody
+        },
+        attachments: attachments,
+        inlineImages: inlineImagesObj
+      };
+    } catch (e) {
       console.error(`ERROR: No Gmail draft found: '${e.message}'`);
       return;
     }
 
     /**
-     * Filter draft objects with the matching subject linemessage by matching the subject line.
-     * @param {string} subject_line to search for draft message
-     * @return {object} GmailDraft object
-    */
-    function subjectFilter_(subject_line){
+     * Filter draft objects by the matching subject line.
+     * 
+     * @param {string} subject_line - Subject line to search for the draft message.
+     * @return {function} GmailDraft object filter function.
+     */
+    function subjectFilter_(subject_line) {
       return function(element) {
         if (element.getMessage().getSubject() === subject_line) {
           return element;
@@ -454,31 +381,28 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   }
   
   /**
-   * Fill template string with data object
-   * @see https://stackoverflow.com/a/378000/1027723
-   * @param {string} template string containing {{}} markers which are replaced with data
-   * @param {object} data object used to replace {{}} markers
-   * @return {object} message replaced with data
-  */
+   * Fills template string with data object values.
+   * 
+   * @param {string} template - Template string containing {{}} markers for replacement.
+   * @param {object} data - Object with values to replace the {{}} markers.
+   * @return {object} Message replaced with data.
+   */
   function fillInTemplateFromObject_(template, data) {
-    // We have two templates one for plain text and the html body
-    // Stringifying the object means we can do a global replace
     let template_string = JSON.stringify(template);
 
-    // Token replacement
     template_string = template_string.replace(/{{[^{}]+}}/g, key => {
       const text = data[key.replace(/[{}]+/g, "")] || "";
-      return escapeData_(text.replace(/\n/g, '<br>')); // Replace newlines with <br> for HTML
+      return escapeData_(text.replace(/\n/g, '<br>'));
     });
-    return  JSON.parse(template_string);
+    return JSON.parse(template_string);
   }
 
   /**
-   * Escape cell data to make JSON safe
-   * @see https://stackoverflow.com/a/9204218/1027723
-   * @param {string} str to escape JSON special characters from
-   * @return {string} escaped string
-  */
+   * Escapes cell data to make it JSON safe.
+   * 
+   * @param {string} str - String to escape special characters.
+   * @return {string} Escaped string.
+   */
   function escapeData_(str) {
     return str
       .replace(/[\\]/g, '\\\\')
@@ -494,7 +418,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
 
 // console.time(`START: `); // start a process timer
 // console.timeEnd(`END: `); // end a proceess timer
-// console.log(`DEBUG: Constant message strong here, followed by variable: '${variable}'`); // debug
-// console.info(`INFO: Constant message strong here, followed by variable: '${variable}'`); // info
-// console.warn(`WARNING: Constant message strong here, followed by variable: '${variable}'`); // warning
-// console.error(`ERROR: Constant message strong here, followed by variable: '${variable}'`); // error
+// console.log(`DEBUG: Constant message, followed by variable: '${e.message}'`); // debug
+// console.info(`INFO: Constant message, followed by variable: '${e.message}'`); // info
+// console.warn(`WARNING: Constant message, followed by variable: '${e.message}'`); // warning
+// console.error(`ERROR: Constant message, followed by variable: '${e.message}'`); // error
