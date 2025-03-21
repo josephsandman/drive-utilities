@@ -102,8 +102,8 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   const out = [];
 
   console.time("Total row processing time");
-  obj.forEach(function(row, rowIdx) {
-    if (row[RECIPIENT_COL] === '' && row[EMAIL_SENT_COL] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
+  obj.forEach(function (row, rowIdx) {
+    if (row[RECIPIENT_COL] !== '' && row[EMAIL_SENT_COL] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
       console.time(`Row '${rowIdx + 2}' processing time `);
       try {
         const msgObj = fillInTemplateFromObject_(emailTemplate.message, row);
