@@ -28,7 +28,45 @@ function onOpen(e) {
     .addToUi();
   ui.createMenu('📧 Gmail utilities 📧')
       .addItem('📧 Send mail merge', 'sendEmails')
+      .addItem('Display Sheet Names','displaySheetNames')
       .addToUi();
+}
+
+/**
+ * Displays a prompt dialog to the user with the names of all available sheets
+ * in the active spreadsheet and allows them to select one.
+ *
+ * This function retrieves the names of all sheets, presents them to the user in a
+ * prompt dialog, and processes the user's selection. If the user selects a valid
+ * sheet name, further actions can be taken based on the selected sheet. If the
+ * user cancels the prompt or selects an invalid name, appropriate alerts are shown.
+ *
+ * @function displaySheetNames
+ * @returns {void} This function does not return a value.
+ */
+function displaySheetNames() {
+  let sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
+  let sheetNames = sheets.map(sheet => sheet.getName());
+  console.log(`sheetNames = '${sheetNames.join(', ')}'`);
+
+  // Present the sheet names to the user using a dialog
+  let ui = SpreadsheetApp.getUi();
+  let result = ui.prompt('Choose a sheet', 'Available sheets: ' + sheetNames.join(', '), ui.ButtonSet.OK_CANCEL);
+  console.log(`User input: '${result.getResponseText()}'`);
+
+  // Continue processing based on the user's input
+  if (result.getSelectedButton() == ui.Button.OK) {
+    let selectedSheetName = result.getResponseText();
+    if (sheetNames.includes(selectedSheetName)) {
+      let selectedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(selectedSheetName);
+      // Continue processing with selectedSheet
+    } else {
+      ui.alert('The selected sheet name is not valid.');
+      console.warn(`The selected sheet name is not valid.\rUser input: '${result.getResponseText()}'`);
+    }
+  } else {
+    ui.alert('Process cancelled.');
+  }
 }
 
 /**
