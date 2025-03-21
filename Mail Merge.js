@@ -15,7 +15,7 @@
 /**
  * @OnlyCurrentDoc
 */
- 
+
 /**
  * Sends emails to recipients based on data from a specified Google Sheet.
  * 
@@ -37,17 +37,17 @@
  * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge");
  */
 function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent) {
-  console.log(`DEBUG: Parameters received by sendEmails(): \rsubjectLine: ${subjectLine}\rthisSheet: ${thisSheet}\rthisTab: ${thisTab}\remailRecipients: ${emailRecipients}\remailSent: ${emailSent}`);
-  console.time('sendEmails() processing time');
-  
+  console.log(`Start sendEmails('${subjectLine}', '${thisSheet}', '${thisTab}', '${emailRecipients}', '${emailSent}')`);
+  console.time(`sendEmails() processing time`);
+
   let RECIPIENT_COL = emailRecipients || getUserInput("Enter the header name for recipient email addresses:");
   let EMAIL_SENT_COL = emailSent || getUserInput("Enter the header name for email sent status:");
 
   if (!subjectLine) {
-    subjectLine = Browser.inputBox( "Mail Merge",
-                                    "Type or copy/paste the subject line of the Gmail " +
-                                    "draft message you would like to mail merge with:",
-                                    Browser.Buttons.OK_CANCEL);
+    subjectLine = Browser.inputBox("Mail Merge",
+      "Type or copy/paste the subject line of the Gmail " +
+      "draft message you would like to mail merge with:",
+      Browser.Buttons.OK_CANCEL);
     if (subjectLine === "cancel" || subjectLine === "") {
       console.error(`ERROR: Abort script due to prompt response: '${subjectLine}'`);
       return;
@@ -64,11 +64,11 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
       console.log(`DEBUG: Proceeding with the current active sheet as default: '${sheet}'`);
     }
   }
-  
+
   console.info(`INFO: Sending mail merge from '${sheet.getName()}' with subject: '${subjectLine}'`);
-  
+
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
-  
+
   const dataRange = sheet.getDataRange();
   const data = dataRange.getDisplayValues();
 
@@ -90,13 +90,13 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     console.error(`ERROR: Abort script due to missing column header: '${EMAIL_SENT_COL}'`);
     return;
   }
-  
+
   console.log(`DEBUG: Ready to define emailSentColIdx: '${heads.indexOf(EMAIL_SENT_COL)}'`);
-  
+
   const emailSentColIdx = heads.indexOf(EMAIL_SENT_COL);
 
   console.log(`DEBUG: Email sent column: '${emailSentColIdx}'`);
-  
+
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
 
   const out = [];
@@ -109,9 +109,9 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
         const msgObj = fillInTemplateFromObject_(emailTemplate.message, row);
 
         MailApp.sendEmail(
-          row[RECIPIENT_COL], 
-          msgObj.subject, 
-          msgObj.text, 
+          row[RECIPIENT_COL],
+          msgObj.subject,
+          msgObj.text,
           {
             htmlBody: msgObj.html,
             // bcc: 'a.bbc@email.com',
@@ -134,7 +134,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     } else {
       if (row[EMAIL_SENT_COL] !== '') {
         console.log(`DEBUG: Skipping Row ${rowIdx + 2} - Email already sent.`);
-      } 
+      }
       if (sheet.isRowHiddenByFilter(rowIdx + 2)) {
         console.log(`DEBUG: Skipping Row ${rowIdx + 2} - Row hidden by filter.`);
       }
@@ -142,21 +142,27 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     }
   });
   console.timeEnd("Total row processing time");
-  
+
   sheet.getRange(2, emailSentColIdx + 1, out.length).setValues(out);
   console.log(`DEBUG: Finished writing outputs to rows.`);
-  
+
   /**
-   * Get a Gmail draft message by matching the subject line.
-   * 
-   * @param {string} subject_line - Subject line to search for the draft message.
-   * @return {object} Contains the subject, plain and HTML message body, and attachments.
-   */
+ * Retrieves a Gmail draft message by matching the subject line.
+ * 
+ * This function searches through the user's Gmail drafts for a message with a subject
+ * line that matches the specified parameter. If a matching draft is found, it extracts
+ * the subject, plain and HTML message body, and any attached files.
+ *
+ * @param {string} subject_line The subject line to search for the draft message.
+ * @returns {{ message: { subject: string, text: string, html: string }, attachments: GoogleAppsScript.Gmail.GmailAttachment[], inlineImages: Object }} An object containing the subject, plain and HTML message body, and any attachments.
+ * 
+ * @throws {Error} Throws an error if no matching draft is found or if there is an issue accessing the drafts.
+ */
   function getGmailTemplateFromDrafts_(subject_line) {
     console.info(`INFO: Searching for draft with subject line: '${subject_line}'`);
     try {
       const drafts = GmailApp.getDrafts();
-      console.debug(`DEBUG: Total drafts retrieved: ${drafts.length}`);
+      console.log(`DEBUG: Total drafts retrieved: ${drafts.length}`);
       const draft = drafts.filter(subjectFilter_(subject_line))[0];
       if (!draft) {
         console.warn(`WARNING: No draft found matching the subject line: '${subject_line}'`);
@@ -166,17 +172,17 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
       }
       const msg = draft.getMessage();
 
-      const allInlineImages = draft.getMessage().getAttachments({includeInlineImages: true, includeAttachments: false});
-      console.debug(`DEBUG: Total inline images found: ${allInlineImages.length}`);
-      const attachments = draft.getMessage().getAttachments({includeInlineImages: false});
+      const allInlineImages = draft.getMessage().getAttachments({ includeInlineImages: true, includeAttachments: false });
+      console.log(`DEBUG: Total inline images found: ${allInlineImages.length}`);
+      const attachments = draft.getMessage().getAttachments({ includeInlineImages: false });
       const htmlBody = msg.getBody();
-      console.debug(`DEBUG: Draft HTML body length: ${htmlBody.length}`);
+      console.log(`DEBUG: Draft HTML body length: ${htmlBody.length}`);
 
       const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj), {});
 
       const imgexp = RegExp('<img.*?src="cid:(.*?)".*?alt="(.*?)"[^\>]+>', 'g');
       const matches = [...htmlBody.matchAll(imgexp)];
-      console.debug(`DEBUG: Total inline image matches found in HTML body: ${matches.length}`);
+      console.log(`DEBUG: Total inline image matches found in HTML body: ${matches.length}`);
 
       const inlineImagesObj = {};
       matches.forEach(match => inlineImagesObj[match[1]] = img_obj[match[2]]);
@@ -197,26 +203,36 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
     }
 
     /**
-     * Filter draft objects by the matching subject line.
+     * Filters draft objects by matching the subject line.
      * 
-     * @param {string} subject_line - Subject line to search for the draft message.
-     * @return {function} GmailDraft object filter function.
+     * This function returns a filter function that checks if a draft's subject 
+     * matches the specified subject line.
+     *
+     * @param {string} subject_line The subject line to search for in the draft messages.
+     * @returns {function(GoogleAppsScript.Gmail.GmailDraft): boolean} A function that takes a draft 
+     * object and returns true if the draft's subject matches the subject line, otherwise false.
      */
     function subjectFilter_(subject_line) {
-      return function(element) {
-        if (element.getMessage().getSubject() === subject_line) {
-          return element;
-        }
+      return function (element) {
+        return element.getMessage().getSubject() === subject_line;
       }
     }
   }
-  
+
   /**
-   * Fills template string with data object values.
+   * Fills a template string with values from the provided data object.
    * 
-   * @param {string} template - Template string containing {{}} markers for replacement.
-   * @param {object} data - Object with values to replace the {{}} markers.
-   * @return {object} Message replaced with data.
+   * This function replaces all occurrences of {{key}} in the template string 
+   * with corresponding values from the data object. If a key does not exist in 
+   * the object, it will be replaced with an empty string.
+   * 
+   * @param {string} template The template string containing {{}} markers for replacement.
+   * @param {object} data An object with key-value pairs to replace the {{}} markers.
+   * @returns {string} The filled template string with the values from the data object.
+   *
+   * @example
+   * const result = fillInTemplateFromObject_('Hello, {{name}}!', { name: 'Alice' });
+   * console.log(result); // Output: 'Hello, Alice!'
    */
   function fillInTemplateFromObject_(template, data) {
     let template_string = JSON.stringify(template);
@@ -229,10 +245,17 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   }
 
   /**
-   * Escapes cell data to make it JSON safe.
+   * Escapes cell data to make it JSON-safe.
    * 
-   * @param {string} str - String to escape special characters.
-   * @return {string} Escaped string.
+   * This function replaces special characters in a string with their escaped 
+   * equivalents to ensure the string can be safely used in JSON contexts.
+   *
+   * @param {string} str The string to escape special characters.
+   * @returns {string} The escaped string.
+   *
+   * @example
+   * const safeString = escapeData_('This "string" contains special characters: \n and \t.');
+   * console.log(safeString); // Output: This \"string\" contains special characters: \\n and \\t.
    */
   function escapeData_(str) {
     return str
@@ -244,12 +267,21 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
       .replace(/[\n]/g, '\\n')
       .replace(/[\r]/g, '\\r')
       .replace(/[\t]/g, '\\t');
-  };
+  }
 
+  /**
+   * Checks if the provided header row is valid.
+   * 
+   * This function verifies that the header row contains at least two unique,
+   * non-empty headers. It returns true if the conditions are met, otherwise false.
+   *
+   * @param {Array<string>} headers An array of header strings to validate.
+   * @returns {boolean} Returns true if the header row is valid; otherwise false.
+   */
   function isValidHeaderRow(headers) {
     const uniqueHeaders = new Set(headers.filter(header => header.trim() !== ""));
     return uniqueHeaders.size >= 2;
-  };
+  }
 
-  console.timeEnd('sendEmails() processing time');
+  console.timeEnd(`sendEmails() processing time`);
 }
