@@ -1,3 +1,7 @@
+/**
+ * @OnlyCurrentDoc
+*/
+
 // Copyright Martin Hawksey 2020
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -11,10 +15,6 @@
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 // License for the specific language governing permissions and limitations under
 // the License.
- 
-/**
- * @OnlyCurrentDoc
-*/
 
 /**
  * Sends emails to recipients based on data from a specified Google Sheet.
@@ -34,7 +34,7 @@
  * @throws {Error} If the specified sheet, tab, or required headers do not exist.
  * 
  * @example
- * sendEmails("Weekly Update", "1B2c...xyz", "Mail Merge");
+ * sendEmails("Weekly Update", "1B2c...xyr", "Mail Merge");
  */
 function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent) {
   console.log(`Start sendEmails('${subjectLine}', '${thisSheet}', '${thisTab}', '${emailRecipients}', '${emailSent}')`);
