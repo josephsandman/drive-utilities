@@ -41,16 +41,16 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   console.log(`Start sendEmails('${subjectLine}', '${thisSheet}', '${thisTab}', '${emailRecipients}', '${emailSent}')`);
   console.time(`sendEmails() processing time`);
 
-  let RECIPIENT_COL = emailRecipients || getUserInput("Enter the header name for recipient email addresses:");
-  let EMAIL_SENT_COL = emailSent || getUserInput("Enter the header name for email sent status:");
+  let RECIPIENT_COL = emailRecipients || getUserInput("Enter the HEADER NAME of the column of recipient email addresses:");
+  let EMAIL_SENT_COL = emailSent || getUserInput("Enter the HEADER NAME of the column of email sent status:");
 
   if (!subjectLine) {
     subjectLine = Browser.inputBox("Mail Merge",
-      "Type or copy/paste the subject line of the Gmail " +
+      "Type or copy/paste the SUBJECT LINE of the Gmail " +
       "draft message you would like to mail merge with:",
       Browser.Buttons.OK_CANCEL);
     if (subjectLine === "cancel" || subjectLine === "") {
-      console.error(`ERROR: Abort script due to prompt response: '${subjectLine}'`);
+      console.error(`Abort script due to prompt response: '${subjectLine}'`);
       return;
     }
   }
@@ -60,13 +60,13 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   } else {
     sheet = SpreadsheetApp.openById(getIdFromUrl(thisSheet)).getSheetByName(String(thisTab));
     if (!sheet) {
-      console.warn(`WARNING: Sheet named '${thisTab}' was not found in '${thisSheet}'.`);
+      console.warn(`Sheet named '${thisTab}' was not found in '${thisSheet}'.`);
       sheet = SpreadsheetApp.getActiveSheet();
-      console.log(`DEBUG: Proceeding with the current active sheet as default: '${sheet}'`);
+      console.log(`Proceeding with the current active sheet as default: '${sheet}'`);
     }
   }
 
-  console.info(`INFO: Sending mail merge from '${sheet.getName()}' with subject: '${subjectLine}'`);
+  console.info(`Sending mail merge from '${sheet.getName()}' with subject: '${subjectLine}'`);
 
   const emailTemplate = getGmailTemplateFromDrafts_(subjectLine);
 
@@ -76,27 +76,27 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   const heads = data.shift();
 
   if (!isValidHeaderRow(heads)) {
-    console.error(`ERROR: Header row must contain at least two unique headers. Invalid headers: '${heads}'`);
+    console.error(`Header row must contain at least two unique headers. Invalid headers: '${heads}'`);
     return;
   }
 
-  console.log(`DEBUG: Headers array: '${heads}'`);
+  console.log(`Headers array: '${heads}'`);
 
   if (!heads.includes(RECIPIENT_COL)) {
-    console.error(`ERROR: Abort script due to missing column header: '${RECIPIENT_COL}'`);
+    console.error(`Abort script due to missing column header: '${RECIPIENT_COL}'`);
     return;
   }
 
   if (!heads.includes(EMAIL_SENT_COL)) {
-    console.error(`ERROR: Abort script due to missing column header: '${EMAIL_SENT_COL}'`);
+    console.error(`Abort script due to missing column header: '${EMAIL_SENT_COL}'`);
     return;
   }
 
-  console.log(`DEBUG: Ready to define emailSentColIdx: '${heads.indexOf(EMAIL_SENT_COL)}'`);
+  console.log(`Ready to define emailSentColIdx: '${heads.indexOf(EMAIL_SENT_COL)}'`);
 
   const emailSentColIdx = heads.indexOf(EMAIL_SENT_COL);
 
-  console.log(`DEBUG: Email sent column: '${emailSentColIdx}'`);
+  console.log(`Email sent column: '${emailSentColIdx}'`);
 
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
 
@@ -128,16 +128,16 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
         console.info(`INFO: Email sent to '${row[RECIPIENT_COL]}' (Row ${rowIdx + 2})`);
       } catch (e) {
         out.push([e.message]);
-        console.error(`ERROR: Failed to send email to '${row[RECIPIENT_COL]}' (Row ${rowIdx + 2}). Error: ${e.message}`);
+        console.error(`Failed to send email to '${row[RECIPIENT_COL]}' (Row ${rowIdx + 2}). Error: ${e.message}`);
       } finally {
         console.timeEnd(`Row '${rowIdx + 2}' processing time `);
       }
     } else {
       if (row[EMAIL_SENT_COL] !== '') {
-        console.log(`DEBUG: Skipping Row ${rowIdx + 2} - Email already sent.`);
+        console.log(`Skipping Row ${rowIdx + 2} - Email already sent.`);
       }
       if (sheet.isRowHiddenByFilter(rowIdx + 2)) {
-        console.log(`DEBUG: Skipping Row ${rowIdx + 2} - Row hidden by filter.`);
+        console.log(`Skipping Row ${rowIdx + 2} - Row hidden by filter.`);
       }
       out.push([row[EMAIL_SENT_COL]]);
     }
@@ -145,7 +145,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
   console.timeEnd("Total row processing time");
 
   sheet.getRange(2, emailSentColIdx + 1, out.length).setValues(out);
-  console.log(`DEBUG: Finished writing outputs to rows.`);
+  console.log(`Finished writing outputs to rows.`);
 
   /**
  * Retrieves a Gmail draft message by matching the subject line.
@@ -160,34 +160,34 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
  * @throws {Error} Throws an error if no matching draft is found or if there is an issue accessing the drafts.
  */
   function getGmailTemplateFromDrafts_(subject_line) {
-    console.info(`INFO: Searching for draft with subject line: '${subject_line}'`);
+    console.info(`Searching for draft with subject line: '${subject_line}'`);
     try {
       const drafts = GmailApp.getDrafts();
-      console.log(`DEBUG: Total drafts retrieved: ${drafts.length}`);
+      console.log(`Total drafts retrieved: ${drafts.length}`);
       const draft = drafts.filter(subjectFilter_(subject_line))[0];
       if (!draft) {
-        console.warn(`WARNING: No draft found matching the subject line: '${subject_line}'`);
+        console.warn(`No draft found matching the subject line: '${subject_line}'`);
         return;
       } else {
-        console.info(`INFO: Draft found with subject: '${draft.getMessage().getSubject()}'`);
+        console.info(`Draft found with subject: '${draft.getMessage().getSubject()}'`);
       }
       const msg = draft.getMessage();
 
       const allInlineImages = draft.getMessage().getAttachments({ includeInlineImages: true, includeAttachments: false });
-      console.log(`DEBUG: Total inline images found: ${allInlineImages.length}`);
+      console.log(`Total inline images found: ${allInlineImages.length}`);
       const attachments = draft.getMessage().getAttachments({ includeInlineImages: false });
       const htmlBody = msg.getBody();
-      console.log(`DEBUG: Draft HTML body length: ${htmlBody.length}`);
+      console.log(`Draft HTML body length: ${htmlBody.length}`);
 
       const img_obj = allInlineImages.reduce((obj, i) => (obj[i.getName()] = i, obj), {});
 
       const imgexp = RegExp('<img.*?src="cid:(.*?)".*?alt="(.*?)"[^\>]+>', 'g');
       const matches = [...htmlBody.matchAll(imgexp)];
-      console.log(`DEBUG: Total inline image matches found in HTML body: ${matches.length}`);
+      console.log(`Total inline image matches found in HTML body: ${matches.length}`);
 
       const inlineImagesObj = {};
       matches.forEach(match => inlineImagesObj[match[1]] = img_obj[match[2]]);
-      console.info(`INFO: Returning message details for subject: '${subject_line}'`);
+      console.info(`Returning message details for subject: '${subject_line}'`);
 
       return {
         message: {
@@ -199,7 +199,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
         inlineImages: inlineImagesObj
       };
     } catch (e) {
-      console.error(`ERROR: No Gmail draft found: '${e.message}'`);
+      console.error(`No Gmail draft found: '${e.message}'`);
       return;
     }
 
