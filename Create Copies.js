@@ -124,19 +124,27 @@ function createCopies(fileSource, fileDestination, thisSheet, thisTab, setRange,
 
   console.log(`urlColumn = '${urlColumn}'\rindexOf(COPY_URL_COL) = '${heads.indexOf(COPY_URL_COL)}'`);
 
-  if (urlColumn && (urlColumn - 1) !== heads.indexOf(COPY_URL_COL)) {
+  if ((urlColumn - 1) === heads.indexOf(COPY_URL_COL)) {
+    console.log(`urlColumn parameter and COPY_URL_COL match: '${COPY_URL_COL}' === '${urlColumn}'`);
+    urlColumn = heads.indexOf(COPY_URL_COL);
+  } else if (urlColumn && (urlColumn - 1) !== heads.indexOf(COPY_URL_COL)) {
     console.error(`Abort script due to mismatch of urlColumn parameter and COPY_URL_COL: '${COPY_URL_COL}' !== '${urlColumn}'`);
+    return;
+  } else if (!urlColumn && !heads.includes(COPY_URL_COL)) {
+    console.error(`Abort script due to missing column header: '${COPY_URL_COL}'`);
     return;
   } else if (!urlColumn && heads.includes(COPY_URL_COL)) {
     console.warn(`Falsy urlColumn parameter: '${urlColumn}'`);
     console.log(`Truthy heads.includes(COPY_URL_COL): '${heads.includes(COPY_URL_COL)}'`);
     console.log(`Defining urlColumn = heads.indexOf(COPY_URL_COL) = '${heads.indexOf(COPY_URL_COL)}'`);
     urlColumn = heads.indexOf(COPY_URL_COL);
-  } else if (!heads.includes(COPY_URL_COL)) {
-    console.error(`Abort script due to missing column header: '${COPY_URL_COL}'`);
-    return;
+  } else if (urlColumn && !heads.includes(COPY_URL_COL)) {
+    console.warn(`Falsy heads.includes(COPY_URL_COL): '${urlColumn}'`);
+    console.log(`Truthy urlColumn parameter: '${heads.includes(COPY_URL_COL)}'`);
+    console.log(`Proceedign with urlColumn = '${urlColumn}'`);
+    urlColumn = urlColumn;
   } else {
-    console.warn(`Unknown fatal error occurred.`);
+    console.error(`Unknown fatal error occurred.`);
     return;
   }
 
