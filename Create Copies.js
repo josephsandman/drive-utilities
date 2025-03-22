@@ -47,12 +47,14 @@ function createCopies(fileSource, fileDestination, thisSheet, thisTab, setRange,
     console.error("User input for COPY_NAME_COL was invalid or canceled.");
     return;
   }
+  console.log(`COPY_NAME_COL = '${COPY_NAME_COL}'`);
 
   let COPY_URL_COL = getUserInput("Enter the header name to receive new copy URLs:");
   if (!COPY_URL_COL) {
     console.error("User input for COPY_URL_COL was invalid or canceled.");
     return;
   }
+  console.log(`COPY_URL_COL = '${COPY_URL_COL}'`);
 
   if (!fileSource) {
     console.warn(`createCopies() was run with a falsy fileSource parameter: '${fileSource}'`);
