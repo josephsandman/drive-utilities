@@ -270,7 +270,10 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
       .replace(/[\t]/g, '\\t');
   }
 
-  /**
+  console.timeEnd(`sendEmails() processing time`);
+}
+
+/**
    * Checks if the provided header row is valid.
    * 
    * This function verifies that the header row contains at least two unique,
@@ -279,10 +282,7 @@ function sendEmails(subjectLine, thisSheet, thisTab, emailRecipients, emailSent)
    * @param {Array<string>} headers An array of header strings to validate.
    * @returns {boolean} Returns true if the header row is valid; otherwise false.
    */
-  function isValidHeaderRow(headers) {
-    const uniqueHeaders = new Set(headers.filter(header => header.trim() !== ""));
-    return uniqueHeaders.size >= 2;
-  }
-
-  console.timeEnd(`sendEmails() processing time`);
+function isValidHeaderRow(headers) {
+  const uniqueHeaders = new Set(headers.filter(header => header.trim() !== ""));
+  return uniqueHeaders.size >= 2;
 }

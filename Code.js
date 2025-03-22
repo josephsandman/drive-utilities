@@ -25,6 +25,8 @@ function onOpen(e) {
     .addSeparator()
     .addItem('🔗 Retrieve File links', 'retrieveFiles')
     .addItem('🔗 Retrieve Subfolder links', 'retrieveFolders')
+    .addSeparator()
+    .addItem('📑 Create Copies', 'createCopies')
     .addToUi();
   ui.createMenu('📧 Gmail utilities 📧')
       .addItem('📧 Send mail merge', 'sendEmails')
