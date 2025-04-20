@@ -130,6 +130,9 @@ function isValidHeaderRow(headers) {
  * Converts a 2D array into an array of objects, mapping column headers to cell values.
  *
  * @param {Array<Array<string>>} data A 2D array where the first row contains column headers.
+ * @param {string} urlColumn The column index (1-based) of the sheet where the file URLs will be written
+ * @param {string} nameHeader The header name for filenames to copy
+ * @param {string} urlHeader The header name to receive new copy URLs
  * @returns {Array<Object>} An array of objects representing rows with key-value pairs
  * based on column headers and their corresponding cell values.
  *
@@ -148,37 +151,39 @@ function isValidHeaderRow(headers) {
  * //   { Name: 'Bob', Age: '25', City: 'San Francisco' }
  * // ]
  */
-function mapArraysToObjects(data) {
+function mapArraysToObjects(data, urlColumn, nameHeader, urlHeader) {
   const obj = data.map(r => (heads.reduce((o, k, i) => (o[k] = r[i] || '', o), {})));
   const out = [];
   console.time("Total row processing time");
   obj.forEach(function (row, rowIdx) {
-    if (row[COPY_NAME_COL] !== '' && row[COPY_URL_COL] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
+    if (row[nameHeader] !== '' && row[urlHeader] === '' && !sheet.isRowHiddenByFilter(rowIdx + 2)) {
       console.time(`Row '${rowIdx + 2}' processing time `);
       try {
-        let newFile = template.makeCopy(row[COPY_NAME_COL].toString(), folder);
+        let newFile = template.makeCopy(row[nameHeader].toString(), folder);
         let fileUrl = newFile.getUrl(); // Get the URL of the newly created file
-        sheet.getRange(rowIdx + 2, parseInt(urlColumn)).setValue(String(fileUrl)); // Write the URL to the specified urlColumn in the corresponding row
-        // formSetup(newFile, responseTarget, newTabName = row[COPY_NAME_COL].toString());
+        sheet.getRange(rowIdx + 2, parseInt(urlColumn)).setValue(String(fileUrl)); // Write the URL to the specified urlHeader in the corresponding row
+        // formSetup(newFile, responseTarget, newTabName = row[nameHeader].toString());
 
         out.push([fileUrl]);
-        console.info(`Copy created for '${row[COPY_NAME_COL]}' (Row ${rowIdx + 2})`);
+        console.info(`Copy created for '${row[nameHeader]}' (Row ${rowIdx + 2})`);
       } catch (e) {
         out.push([e.message] || 'Unknown error occurred');
-        console.error(`Failed to create copy for '${row[COPY_NAME_COL]}' (Row ${rowIdx + 2}). Error: ${e.message}`);
+        console.error(`Failed to create copy for '${row[nameHeader]}' (Row ${rowIdx + 2}). Error: ${e.message}`);
       } finally {
         console.timeEnd(`Row '${rowIdx + 2}' processing time `);
       }
     } else {
-      if (row[COPY_URL_COL] !== '') {
+      if (row[urlHeader] !== '') {
         console.log(`Skipping Row ${rowIdx + 2} - Copy already created.`);
       }
       if (sheet.isRowHiddenByFilter(rowIdx + 2)) {
         console.log(`Skipping Row ${rowIdx + 2} - Row hidden by filter.`);
       }
-      out.push([row[COPY_URL_COL]] || '');
+      out.push([row[urlHeader]] || '');
     }
   });
+
+  return out;
 }
 
 // console.time(`START: `); // start a process timer

@@ -158,6 +158,8 @@ function createCopies(fileSource, fileDestination, thisSheet, thisTab, setRange,
 
   console.log(`urlColumn = '${urlColumn}'\rindexOf(COPY_URL_COL) = '${heads.indexOf(COPY_URL_COL)}'`);
 
+  mapArraysToObjects(data, urlColumn, COPY_NAME_COL, COPY_URL_COL);
+
   console.timeEnd("Total row processing time");
 
   console.timeEnd("createCopies() time ");
